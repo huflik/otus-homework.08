@@ -27,6 +27,43 @@ int main(int argc, char* argv[]) {
         ("masks", po::value(&masks)->multitoken(), "Masks of filenames")
         ("hash", po::value(&hash)->default_value("crc32"), "Hashing algorithm");
 
+        po::variables_map vm;
+
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+        po::notify(vm);
+
+        HashType ht = (hash == "md5") ? HashType::MD5 : HashType::CRC32;
+        Hasher hasher(ht);
+
+        Filter filter(min_size, masks);
+
+        Scanner scanner;
+
+        auto files = scanner.Scan(dirs, exclude, depth, filter);
+        
+        Comparer cmp(block, hasher);
+
+        std::vector<bool> used(files.size(), false);
+
+        for(size_t i=0; i < files.size(); ++i) {
+            if(used[i]) {
+                continue;
+            }
+            std::vector<size_t> group{i};
+
+            for(size_t j = i +1; j < files.size(); ++j) {
+                if (!used[j] && cmp.Equal(files[i], files[j])) {
+                    used[j] = true;
+                    group.push_back(j);
+                }
+            }
+            if(group.size() > 1) {
+                for(auto idx : group) {
+                    std::cout << files[idx] << "\n";
+                    std::cout << "\n";
+                }
+            }
+        }
 
     return 0;
 }
