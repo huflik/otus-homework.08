@@ -1,19 +1,20 @@
 #pragma once
 
-#include <vector>
-#include <string>
+#include <cstdint>     
+#include <string>      
+#include <vector>      
+#include "config.h"     
 
-enum class HashType {
-    CRC32,
-    MD5
-};
+class Hasher
+{
+public:
+    explicit Hasher(HashType hash_type);   
+    std::string HashBlock(const char* data, size_t size);
 
-class Hasher {
-    public:
-        explicit Hasher(HashType type);
-        std::string operator()(const std::vector<char>& data) const;
+private:
+    HashType hash_type_; 
 
-    private:
-        HashType type_;
-    
+    std::string HashBlockCrc32(const char* data, size_t size);
+    std::string HashBlockMd5(const char* data, size_t size);
+    static std::string BytesToHex(const uint8_t* data, size_t size);
 };

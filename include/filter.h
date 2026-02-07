@@ -1,15 +1,17 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <boost/regex.hpp>
+#include <string>     
+#include <vector>     
 
-class Filter {
-    public:
-        Filter(std::size_t min_size, const std::vector<std::string>& masks);
-        bool Accept(const std::string& path, std::size_t size) const;
+class Filter
+{
+public:
+    explicit Filter(const std::vector<std::string>& masks);
+    bool Match(const std::string& filename) const;
 
-    private:
-        std::size_t min_size_;
-        std::vector<boost::regex> masks_;
+private:
+    std::vector<std::string> masks_; 
+    
+    static bool MatchOne(const std::string& name, const std::string& mask);   
+    static std::string ToLower(const std::string& s);
 };

@@ -1,31 +1,151 @@
-#include <boost/filesystem.hpp>
+#include <iostream>
 #include "scanner.h"
 
-std::vector<std::string> Scanner::Scan(const std::vector<std::string>& roots, const std::vector<std::string> exclude, std::size_t depth, const Filter& filter) {
-    
-    std::vector<std::string> result;
+Scanner::Scanner(const Config& config) : config_(config), filter_(config.masks)
+{
+}
 
-    for(const auto& root : roots) {
-        boost::filesystem::recursive_directory_iterator it(root), end;
+std::map<uintmax_t, std::vector<std::string>> Scanner::Scan()
+{
+    std::map<uintmax_t, std::vector<std::string>> result;
+    seen_paths_.clear();
+    
+    for (const auto& dir : config_.include_dirs) {
+        if (!boost::filesystem::exists(dir) || 
+            !boost::filesystem::is_directory(dir)) {
+            std::cerr << "Warning: Not a directory or doesn't exist: " << dir << "\n";
+            continue;
+        }
         
-        while (it != end) {
-            if(depth && it.depth() > depth) {
-                it.pop();
+        try {
+            ScanDirectory(dir, 0, result);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Error scanning directory " << dir << ": " << e.what() << "\n";
+        }
+    }
+    
+    return result;
+}
+
+bool Scanner::ScanSubdirectory(size_t current_depth) const
+{
+    return (current_depth + 1) <= config_.depth;
+}
+
+void Scanner::ScanDirectory(const boost::filesystem::path& root, size_t current_depth, std::map<uintmax_t, std::vector<std::string>>& result)
+{
+    if (!boost::filesystem::exists(root) || 
+        !boost::filesystem::is_directory(root)) {
+        return;
+    }
+    
+    if (IsExcluded(root)) {
+        return;
+    }
+    
+    try {
+        boost::filesystem::directory_iterator end;
+        
+        for (boost::filesystem::directory_iterator it(root); it != end; ++it) {
+            const auto& path = it->path();
+            
+            try {
+                if (boost::filesystem::is_symlink(path)) {
+                    continue;
+                }
+                
+                if (boost::filesystem::is_directory(path)) {
+                    if (!ScanSubdirectory(current_depth)) {
+                        continue;
+                    }
+                    
+                    ScanDirectory(path, current_depth + 1, result);
+                    continue;
+                }
+                
+                if (!boost::filesystem::is_regular_file(path)) {
+                    continue;
+                }
+                
+                if (IsExcluded(path)) {
+                    continue;
+                }
+                
+                uintmax_t size;
+                try {
+                    size = boost::filesystem::file_size(path);
+                }
+                catch (...) {
+                    continue;
+                }
+                
+                if (size <= config_.min_file_size) {
+                    continue;
+                }
+                
+                if (!filter_.Match(path.filename().string())) {
+                    continue;
+                }
+                
+                std::string canonical_path;
+                try {
+                    canonical_path = boost::filesystem::canonical(path).string();
+                }
+                catch (...) {
+                    canonical_path = boost::filesystem::absolute(path).string();
+                }
+                
+                if (seen_paths_.count(canonical_path)) {
+                    continue;
+                }
+                
+                seen_paths_.insert(canonical_path);
+                
+                result[size].push_back(canonical_path);
+                
+            }
+            catch (const std::exception& e) {
                 continue;
             }
+        }
+    }
+    catch (const boost::filesystem::filesystem_error& e) {
+        return;
+    }
+}
 
-            if(boost::filesystem::is_regular_file(*it)) {
-                const auto size = boost::filesystem::file_size(*it);
-                const auto path = it->path().string();
-
-                if(filter.Accept(path, size)) {
-                    result.push_back(path);               
+bool Scanner::IsExcluded(const boost::filesystem::path& path) const
+{
+        if (config_.exclude_dirs.empty()) {
+        return false;
+    }
+    
+    try {
+        boost::filesystem::path abs_path = boost::filesystem::absolute(path).lexically_normal();
+        
+        for (const auto& ex_dir : config_.exclude_dirs) {
+            try {
+                boost::filesystem::path abs_ex_dir = boost::filesystem::absolute(ex_dir).lexically_normal();
+                
+                auto relative = abs_path.lexically_relative(abs_ex_dir);
+                
+                if (!relative.empty() && relative.native()[0] != '.') {
+                    return true; 
+                }
+                
+                if (relative == ".") {
+                    return true; 
                 }
             }
-
-            ++it;
-        }        
+            catch (...) {
+                continue; 
+            }
+        }
     }
-
-    return result;
+    catch (...) {
+        return false; 
+    }
+    
+    return false;
 }
