@@ -20,9 +20,10 @@
 ```
 sudo apt-get install libboost-all-dev
 ```
-Скачайте .deb пакет **bayan** и выполните команду:
+Скачайте .deb пакет **bayan** и выполните команды:
 ```
 sudo dpkg -i bayan.deb
+sudo ln -s ~/bin/bayan /usr/local/bin/
 ```
 ## Использование
 ### Базовый синтаксис
