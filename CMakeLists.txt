@@ -19,7 +19,10 @@ find_package(Boost REQUIRED COMPONENTS
     program_options
 )
 
+find_package(GTest REQUIRED CONFIG)
+
 add_subdirectory(src)
+add_subdirectory(tests)
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 

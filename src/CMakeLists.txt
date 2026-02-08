@@ -1,5 +1,4 @@
-add_executable(bayan
-    main.cpp
+add_library(bayan_lib
     parser.cpp
     scanner.cpp
     duplicate_finder.cpp
@@ -10,11 +9,16 @@ add_executable(bayan
     utilities.cpp
 )
 
-target_include_directories(bayan PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
+target_include_directories(bayan_lib
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
+)
+
+add_executable(bayan
+    main.cpp
 )
 
 target_link_libraries(bayan PRIVATE
+    bayan_lib
     Boost::filesystem
     Boost::system
     Boost::regex
