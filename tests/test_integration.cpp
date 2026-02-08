@@ -15,52 +15,40 @@ namespace fs = boost::filesystem;
 class IntegrationTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        // Создаем временную директорию для тестов
         test_root = fs::temp_directory_path() / "bayan_integration_test";
         fs::create_directories(test_root);
-        
-        // Создаем структуру тестовых файлов
+
         CreateTestStructure();
     }
     
     void TearDown() override {
-        // Удаляем временную директорию
         try {
             fs::remove_all(test_root);
         } catch (...) {
-            // Игнорируем ошибки удаления
         }
     }
     
     void CreateTestStructure() {
-        // Директория 1: несколько файлов
         fs::path dir1 = test_root / "dir1";
         fs::create_directories(dir1);
-        
-        // Файлы с одинаковым содержимым (дубликаты)
+
         CreateFile(dir1 / "file1.txt", "This is duplicate file content. Lorem ipsum dolor sit amet.");
-        CreateFile(dir1 / "file2.txt", "This is duplicate file content. Lorem ipsum dolor sit amet."); // Дубликат file1
-        CreateFile(dir1 / "file3.txt", "This is unique file content. Consectetur adipiscing elit."); // Уникальный
-        
-        // Директория 2: больше дубликатов
+        CreateFile(dir1 / "file2.txt", "This is duplicate file content. Lorem ipsum dolor sit amet."); 
+        CreateFile(dir1 / "file3.txt", "This is unique file content. Consectetur adipiscing elit."); 
+
         fs::path dir2 = test_root / "dir2";
         fs::create_directories(dir2);
-        
-        // Файл с таким же содержимым как file1 и file2 (кросс-директорный дубликат)
-        CreateFile(dir2 / "file4.txt", "This is duplicate file content. Lorem ipsum dolor sit amet."); // Дубликат
-        
-        // Другой набор дубликатов
+
+        CreateFile(dir2 / "file4.txt", "This is duplicate file content. Lorem ipsum dolor sit amet."); 
+
         CreateFile(dir2 / "image1.jpg", "PNG image data");
-        CreateFile(dir2 / "image2.jpg", "PNG image data"); // Дубликат image1
-        CreateFile(dir2 / "image3.jpg", "JPG image data"); // Уникальный
-        
-        // Маленький файл (должен быть отфильтрован по min-size)
+        CreateFile(dir2 / "image2.jpg", "PNG image data"); 
+        CreateFile(dir2 / "image3.jpg", "JPG image data"); 
+
         CreateFile(dir2 / "small.txt", "tiny");
         
-        // Пустая директория
         fs::create_directories(test_root / "empty_dir");
         
-        // Вложенная директория
         fs::path nested = test_root / "nested" / "deep";
         fs::create_directories(nested);
         CreateFile(nested / "deep_file.txt", "Deep file content");
@@ -79,24 +67,20 @@ protected:
 };
 
 TEST_F(IntegrationTest, CompleteWorkflowWithDefaultSettings) {
-    // Тестируем полный workflow с настройками по умолчанию
-    
-    // Создаем аргументы командной строки
+
     std::vector<std::string> args = {
         "./bayan",
         "--include", test_root.string(),
         "--min-size", "2",
         "--depth", "1"
     };
-    
-    // Эмулируем argc/argv
+
     int argc = args.size();
     std::vector<const char*> argv;
     for (const auto& arg : args) {
         argv.push_back(arg.c_str());
     }
     
-    // Парсим конфигурацию
     Parser parser;
     Config config = parser.Parse(argc, const_cast<char**>(argv.data()));
     
@@ -104,29 +88,22 @@ TEST_F(IntegrationTest, CompleteWorkflowWithDefaultSettings) {
     EXPECT_EQ(config.include_dirs.size(), 1);
     EXPECT_EQ(config.include_dirs[0], test_root.string());
     
-    // Сканируем директории
     Scanner scanner(config);
     auto files_by_size = scanner.Scan();
-    
-    // Должны найти файлы
+
     EXPECT_FALSE(files_by_size.empty());
-    
-    // Создаем DuplicateFinder
+
     auto hasher = std::make_unique<Hasher>(config.hash_type);
     auto cache = std::make_unique<BlockCache>(config.block_size, std::move(hasher));
     DuplicateFinder finder(std::move(cache));
-    
-    // Ищем дубликаты
+
     auto duplicates = finder.Find(files_by_size);
-    
-    // Должны найти хотя бы одну группу дубликатов
-    // (file1.txt, file2.txt, file4.txt одинаковые)
+
     bool found_text_duplicates = false;
     bool found_image_duplicates = false;
     
     for (const auto& group : duplicates) {
         if (group.size() >= 2) {
-            // Проверяем какие файлы в группе
             int text_count = 0;
             int image_count = 0;
             
@@ -148,14 +125,12 @@ TEST_F(IntegrationTest, CompleteWorkflowWithDefaultSettings) {
             }
         }
     }
-    
-    // Должны найти хотя бы одну группу дубликатов
+
     EXPECT_TRUE(found_text_duplicates || found_image_duplicates);
 }
 
 TEST_F(IntegrationTest, WorkflowWithMasks) {
-    // Тестируем с фильтрацией по маскам
-    
+
     std::vector<std::string> args = {
         "./bayan",
         "--include", test_root.string(),
@@ -176,7 +151,6 @@ TEST_F(IntegrationTest, WorkflowWithMasks) {
     Scanner scanner(config);
     auto files_by_size = scanner.Scan();
     
-    // Должны найти только .txt файлы
     bool found_txt = false;
     bool found_jpg = false;
     
@@ -192,12 +166,11 @@ TEST_F(IntegrationTest, WorkflowWithMasks) {
     }
     
     EXPECT_TRUE(found_txt);
-    EXPECT_FALSE(found_jpg); // .jpg файлы должны быть отфильтрованы
+    EXPECT_FALSE(found_jpg);
 }
 
 TEST_F(IntegrationTest, WorkflowWithExclude) {
-    // Тестируем с исключением директорий
-    
+
     std::vector<std::string> args = {
         "./bayan",
         "--include", test_root.string(),
@@ -216,8 +189,7 @@ TEST_F(IntegrationTest, WorkflowWithExclude) {
     
     Scanner scanner(config);
     auto files_by_size = scanner.Scan();
-    
-    // Не должно быть файлов из dir2
+
     bool found_excluded = false;
     
     for (const auto& [size, files] : files_by_size) {
@@ -234,13 +206,10 @@ TEST_F(IntegrationTest, WorkflowWithExclude) {
 }
 
 TEST_F(IntegrationTest, WorkflowWithMinSize) {
-    // Тестируем с минимальным размером файла
-    
-    // Определяем размер small.txt
+
     fs::path small_file = test_root / "dir2" / "small.txt";
     uintmax_t small_size = fs::file_size(small_file);
-    
-    // Устанавливаем min-size больше размера small.txt
+
     std::vector<std::string> args = {
         "./bayan",
         "--include", test_root.string(),
@@ -258,8 +227,7 @@ TEST_F(IntegrationTest, WorkflowWithMinSize) {
     
     Scanner scanner(config);
     auto files_by_size = scanner.Scan();
-    
-    // small.txt не должен быть найден
+
     bool found_small = false;
     
     for (const auto& [size, files] : files_by_size) {
@@ -276,8 +244,7 @@ TEST_F(IntegrationTest, WorkflowWithMinSize) {
 }
 
 TEST_F(IntegrationTest, WorkflowWithDepth) {
-    // Тестируем с ограничением глубины
-    
+ 
     std::vector<std::string> args = {
         "./bayan",
         "--include", test_root.string(),
@@ -296,8 +263,7 @@ TEST_F(IntegrationTest, WorkflowWithDepth) {
     
     Scanner scanner(config);
     auto files_by_size = scanner.Scan();
-    
-    // deep_file.txt не должен быть найден (находится на глубине 2)
+
     bool found_deep = false;
     
     for (const auto& [size, files] : files_by_size) {
@@ -314,9 +280,6 @@ TEST_F(IntegrationTest, WorkflowWithDepth) {
 }
 
 TEST_F(IntegrationTest, WorkflowWithDifferentHashTypes) {
-    // Тестируем с разными типами хэширования
-  
-    // CRC32
     {
         std::vector<std::string> args = {
             "./bayan",
@@ -343,8 +306,7 @@ TEST_F(IntegrationTest, WorkflowWithDifferentHashTypes) {
         DuplicateFinder finder(std::move(cache));
         
         auto duplicates = finder.Find(files_by_size);
-        
-        // Должны найти дубликаты
+
         bool found_duplicates = false;
         for (const auto& group : duplicates) {
             if (group.size() >= 2) {
@@ -354,8 +316,7 @@ TEST_F(IntegrationTest, WorkflowWithDifferentHashTypes) {
         }
         EXPECT_TRUE(found_duplicates);
     }
-    
-    // MD5
+
     {
         std::vector<std::string> args = {
             "./bayan",
@@ -382,8 +343,7 @@ TEST_F(IntegrationTest, WorkflowWithDifferentHashTypes) {
         DuplicateFinder finder(std::move(cache));
         
         auto duplicates = finder.Find(files_by_size);
-        
-        // Должны найти дубликаты
+
         bool found_duplicates = false;
         for (const auto& group : duplicates) {
             if (group.size() >= 2) {
@@ -396,9 +356,6 @@ TEST_F(IntegrationTest, WorkflowWithDifferentHashTypes) {
 }
 
 TEST_F(IntegrationTest, WorkflowWithDifferentBlockSizes) {
-    // Тестируем с разными размерами блоков
-    
-    // Маленький блок
     {
         std::vector<std::string> args = {
             "./bayan",
@@ -425,8 +382,7 @@ TEST_F(IntegrationTest, WorkflowWithDifferentBlockSizes) {
         DuplicateFinder finder(std::move(cache));
         
         auto duplicates = finder.Find(files_by_size);
-        
-        // Должны найти дубликаты
+
         bool found_duplicates = false;
         for (const auto& group : duplicates) {
             if (group.size() >= 2) {
@@ -436,8 +392,7 @@ TEST_F(IntegrationTest, WorkflowWithDifferentBlockSizes) {
         }
         EXPECT_TRUE(found_duplicates);
     }
-    
-    // Большой блок
+
     {
         std::vector<std::string> args = {
             "./bayan",
@@ -464,8 +419,7 @@ TEST_F(IntegrationTest, WorkflowWithDifferentBlockSizes) {
         DuplicateFinder finder(std::move(cache));
         
         auto duplicates = finder.Find(files_by_size);
-        
-        // Должны найти дубликаты
+
         bool found_duplicates = false;
         for (const auto& group : duplicates) {
             if (group.size() >= 2) {
@@ -478,9 +432,6 @@ TEST_F(IntegrationTest, WorkflowWithDifferentBlockSizes) {
 }
 
 TEST_F(IntegrationTest, NoDuplicatesFound) {
-    // Тестируем случай когда дубликатов нет
-    
-    // Создаем директорию с уникальными файлами
     fs::path unique_dir = test_root / "unique";
     fs::create_directories(unique_dir);
     
@@ -505,8 +456,7 @@ TEST_F(IntegrationTest, NoDuplicatesFound) {
     
     Scanner scanner(config);
     auto files_by_size = scanner.Scan();
-    
-    // Должны найти файлы
+
     EXPECT_FALSE(files_by_size.empty());
     
     auto hasher = std::make_unique<Hasher>(config.hash_type);
@@ -514,14 +464,11 @@ TEST_F(IntegrationTest, NoDuplicatesFound) {
     DuplicateFinder finder(std::move(cache));
     
     auto duplicates = finder.Find(files_by_size);
-    
-    // Не должно быть дубликатов
+
     EXPECT_TRUE(duplicates.empty());
 }
 
-TEST_F(IntegrationTest, EmptyDirectory) {
-    // Тестируем пустую директорию
-    
+TEST_F(IntegrationTest, EmptyDirectory) { 
     fs::path empty_dir = test_root / "really_empty";
     fs::create_directories(empty_dir);
     
@@ -542,8 +489,7 @@ TEST_F(IntegrationTest, EmptyDirectory) {
     
     Scanner scanner(config);
     auto files_by_size = scanner.Scan();
-    
-    // Не должно быть файлов
+
     EXPECT_TRUE(files_by_size.empty());
     
     auto hasher = std::make_unique<Hasher>(config.hash_type);
@@ -551,14 +497,11 @@ TEST_F(IntegrationTest, EmptyDirectory) {
     DuplicateFinder finder(std::move(cache));
     
     auto duplicates = finder.Find(files_by_size);
-    
-    // Не должно быть дубликатов
+
     EXPECT_TRUE(duplicates.empty());
 }
 
 TEST_F(IntegrationTest, MultipleIncludeDirectories) {
-    // Тестируем несколько включаемых директорий
-    
     std::vector<std::string> args = {
         "./bayan",
         "--include", (test_root / "dir1").string(),
@@ -579,8 +522,7 @@ TEST_F(IntegrationTest, MultipleIncludeDirectories) {
     
     Scanner scanner(config);
     auto files_by_size = scanner.Scan();
-    
-    // Должны найти файлы из обеих директорий
+
     bool found_dir1 = false;
     bool found_dir2 = false;
     
@@ -600,8 +542,7 @@ TEST_F(IntegrationTest, MultipleIncludeDirectories) {
 }
 
 TEST_F(IntegrationTest, ComplexConfiguration) {
-    // Тестируем сложную конфигурацию со всеми параметрами
-    
+
     std::vector<std::string> args = {
         "./bayan",
         "--include", test_root.string(),
@@ -640,33 +581,27 @@ TEST_F(IntegrationTest, ComplexConfiguration) {
     DuplicateFinder finder(std::move(cache));
     
     auto duplicates = finder.Find(files_by_size);
-    
-    // Просто проверяем что не падает
+
     EXPECT_NO_THROW();
 }
 
-TEST_F(IntegrationTest, FileModificationDoesNotAffectHashing) {
-    // Тестируем что изменение времени модификации не влияет на определение дубликатов
-    
+TEST_F(IntegrationTest, FileModificationDoesNotAffectHashing) {   
     fs::path dir = test_root / "mod_test";
     fs::create_directories(dir);
-    
-    // Создаем два одинаковых файла
+
     fs::path file1 = dir / "original.txt";
     fs::path file2 = dir / "copy.txt";
     
     std::string content = "Same content for both files";
     CreateFile(file1, content);
     CreateFile(file2, content);
-    
-    // Меняем время модификации второго файла
+
     std::this_thread::sleep_for(std::chrono::seconds(1));
     {
         std::ofstream file(file2.string(), std::ios::app);
-        file << " "; // Добавляем пробел и удаляем его
+        file << " "; 
     }
-    
-    // Удаляем пробел чтобы содержимое осталось прежним
+
     std::string file2_content;
     {
         std::ifstream file(file2.string());
@@ -674,15 +609,12 @@ TEST_F(IntegrationTest, FileModificationDoesNotAffectHashing) {
         buffer << file.rdbuf();
         file2_content = buffer.str();
     }
-    
-    // Удаляем последний символ если это пробел
+
     if (!file2_content.empty() && file2_content.back() == ' ') {
         file2_content.pop_back();
         std::ofstream file(file2.string());
         file << file2_content;
     }
-    
-    // Теперь файлы имеют одинаковое содержимое но разное время модификации
     
     std::vector<std::string> args = {
         "./bayan",
@@ -708,7 +640,6 @@ TEST_F(IntegrationTest, FileModificationDoesNotAffectHashing) {
     
     auto duplicates = finder.Find(files_by_size);
     
-    // Должны найти дубликаты (файлы одинаковые несмотря на разное время)
     bool found_duplicates = false;
     for (const auto& group : duplicates) {
         if (group.size() >= 2) {

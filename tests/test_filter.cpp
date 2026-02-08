@@ -6,8 +6,7 @@
 TEST(FilterTest, ConstructorEmptyMasks) {
     std::vector<std::string> empty_masks;
     Filter filter(empty_masks);
-    
-    // С пустыми масками все должно совпадать
+
     EXPECT_TRUE(filter.Match("test.txt"));
     EXPECT_TRUE(filter.Match("file.jpg"));
     EXPECT_TRUE(filter.Match("document.pdf"));
@@ -41,7 +40,7 @@ TEST(FilterTest, MultipleMasks) {
     EXPECT_TRUE(filter.Match("test.txt"));
     EXPECT_TRUE(filter.Match("error.log"));
     EXPECT_TRUE(filter.Match("file_backup.dat"));
-    EXPECT_TRUE(filter.Match("FILE_123.tmp")); // case insensitive
+    EXPECT_TRUE(filter.Match("FILE_123.tmp"));
     EXPECT_FALSE(filter.Match("temp.dat"));
     EXPECT_FALSE(filter.Match("backup.bak"));
 }
@@ -54,7 +53,7 @@ TEST(FilterTest, SimpleWildcard) {
     EXPECT_TRUE(filter.Match("test123.dat"));
     EXPECT_TRUE(filter.Match("test_file.jpg"));
     EXPECT_FALSE(filter.Match("temp.txt"));
-    EXPECT_FALSE(filter.Match("atest.txt")); // test не в начале
+    EXPECT_FALSE(filter.Match("atest.txt"));
 }
 
 TEST(FilterTest, SimpleQuestionMark) {
@@ -63,8 +62,8 @@ TEST(FilterTest, SimpleQuestionMark) {
     
     EXPECT_TRUE(filter.Match("file1.txt"));
     EXPECT_TRUE(filter.Match("fileA.txt"));
-    EXPECT_FALSE(filter.Match("file.txt")); // Нет символа после file
-    EXPECT_FALSE(filter.Match("file12.txt")); // Два символа после file
+    EXPECT_FALSE(filter.Match("file.txt"));
+    EXPECT_FALSE(filter.Match("file12.txt"));
 }
 
 TEST(FilterTest, ComplexMask) {
@@ -74,7 +73,7 @@ TEST(FilterTest, ComplexMask) {
     EXPECT_TRUE(filter.Match("test_file.txt"));
     EXPECT_TRUE(filter.Match("unit_test.cpp"));
     EXPECT_TRUE(filter.Match("mytestfile.jpg"));
-    EXPECT_FALSE(filter.Match("temp_file.txt")); // Нет test
+    EXPECT_FALSE(filter.Match("temp_file.txt"));
 }
 
 TEST(FilterTest, ToLowerUtility) {
@@ -113,7 +112,7 @@ TEST(FilterTest, FixedFilename) {
     
     EXPECT_TRUE(filter.Match("Makefile"));
     EXPECT_TRUE(filter.Match("README.md"));
-    EXPECT_TRUE(filter.Match("readme.md")); // case insensitive
+    EXPECT_TRUE(filter.Match("readme.md"));
     EXPECT_FALSE(filter.Match("Makefile.txt"));
     EXPECT_FALSE(filter.Match("README.txt"));
 }

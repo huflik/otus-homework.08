@@ -6,7 +6,6 @@
 class DuplicateFinderTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        // Создаем реальные объекты
         auto hasher = std::make_unique<Hasher>(HashType::CRC32);
         auto cache = std::make_unique<BlockCache>(4096, std::move(hasher));
         finder = std::make_unique<DuplicateFinder>(std::move(cache));
@@ -44,16 +43,13 @@ TEST_F(DuplicateFinderTest, FindSingleFileGroups) {
 }
 
 TEST_F(DuplicateFinderTest, FindGroupsWithMultipleFiles) {
-    // Группы файлов по размеру
     std::map<uintmax_t, std::vector<std::string>> groups = {
         {100, {"test/file1.txt", "test/file2.txt", "test/file3.txt"}},
         {200, {"test/file4.txt", "test/file5.txt"}},
-        {300, {"test/file6.txt"}} // Один файл - не должно быть дубликатов
+        {300, {"test/file6.txt"}}
     };
     
     auto result = finder->Find(groups);
-    // Результат зависит от реальных файлов
-    // Просто проверяем что не падает
     EXPECT_NO_THROW();
 }
 
@@ -63,14 +59,11 @@ TEST_F(DuplicateFinderTest, FindReturnsValidStructure) {
     };
     
     auto result = finder->Find(groups);
-    
-    // Результат должен быть вектором векторов
-    // Даже если дубликатов нет, структура должна быть валидной
+
     EXPECT_NO_THROW();
 }
 
 TEST_F(DuplicateFinderTest, DifferentHashTypes) {
-    // Тестируем с CRC32
     {
         auto hasher = std::make_unique<Hasher>(HashType::CRC32);
         auto cache = std::make_unique<BlockCache>(4096, std::move(hasher));
@@ -83,7 +76,6 @@ TEST_F(DuplicateFinderTest, DifferentHashTypes) {
         EXPECT_NO_THROW(finder.Find(groups));
     }
     
-    // Тестируем с MD5
     {
         auto hasher = std::make_unique<Hasher>(HashType::MD5);
         auto cache = std::make_unique<BlockCache>(4096, std::move(hasher));
@@ -98,12 +90,10 @@ TEST_F(DuplicateFinderTest, DifferentHashTypes) {
 }
 
 TEST_F(DuplicateFinderTest, IntegrationWithRealFiles) {
-    // Создаем временные файлы
     namespace fs = boost::filesystem;
     fs::path temp_dir = fs::temp_directory_path() / "finder_test";
     fs::create_directories(temp_dir);
     
-    // Создаем одинаковые файлы
     {
         std::ofstream file1((temp_dir / "file1.txt").string());
         file1 << "Same content";
@@ -115,10 +105,8 @@ TEST_F(DuplicateFinderTest, IntegrationWithRealFiles) {
         file3 << "Different content";
     }
     
-    // Создаем группы по размеру
     std::map<uintmax_t, std::vector<std::string>> groups;
     
-    // Собираем файлы по размеру
     for (const auto& entry : fs::directory_iterator(temp_dir)) {
         if (fs::is_regular_file(entry)) {
             uintmax_t size = fs::file_size(entry);
@@ -126,15 +114,12 @@ TEST_F(DuplicateFinderTest, IntegrationWithRealFiles) {
         }
     }
     
-    // Ищем дубликаты
     auto hasher = std::make_unique<Hasher>(HashType::CRC32);
     auto cache = std::make_unique<BlockCache>(4096, std::move(hasher));
     DuplicateFinder finder(std::move(cache));
     
     auto result = finder.Find(groups);
-    
-    // Должны найти хотя бы одну группу дубликатов
-    // (file1.txt и file2.txt одинаковые)
+
     bool found_duplicates = false;
     for (const auto& group : result) {
         if (group.size() >= 2) {
@@ -143,7 +128,6 @@ TEST_F(DuplicateFinderTest, IntegrationWithRealFiles) {
         }
     }
     
-    // Очистка
     fs::remove_all(temp_dir);
     
     EXPECT_TRUE(found_duplicates);

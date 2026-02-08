@@ -10,22 +10,18 @@ namespace fs = boost::filesystem;
 class ParserTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        // Сохраняем оригинальные argc/argv
         saved_argv.clear();
         argv_ptrs.clear();
     }
     
     void TearDown() override {
-        // Очищаем выделенную память
         for (auto ptr : argv_ptrs) {
             delete[] ptr;
         }
         argv_ptrs.clear();
     }
-    
-    // Вспомогательная функция для создания argv
+
     char** CreateArgv(const std::vector<std::string>& args) {
-        // Очищаем предыдущие указатели
         for (auto ptr : argv_ptrs) {
             delete[] ptr;
         }
@@ -53,18 +49,14 @@ TEST_F(ParserTest, ParseHelp) {
     
     std::vector<std::string> args = {"./bayan", "--help"};
     char** argv = CreateArgv(args);
-    
-    // help должен выводить сообщение и завершать программу с exit(0)
-    // В тесте мы ловим системный вызов, проверяем что не бросает исключений
+
     EXPECT_NO_THROW({
         try {
             parser.Parse(argc, argv);
         } catch (...) {
-            // Игнорируем исключения от exit()
         }
     });
     
-    // Также проверяем короткую форму
     args = {"./bayan", "-h"};
     argv = CreateArgv(args);
     
@@ -72,21 +64,18 @@ TEST_F(ParserTest, ParseHelp) {
         try {
             parser.Parse(argc, argv);
         } catch (...) {
-            // Игнорируем исключения
         }
     });
 }
 
 TEST_F(ParserTest, ParseDefaultValues) {
     Parser parser;
-    
-    // Минимальные аргументы
+
     std::vector<std::string> args = {"./bayan"};
     char** argv = CreateArgv(args);
     
     Config config = parser.Parse(argc, argv);
-    
-    // Проверяем значения по умолчанию
+
     EXPECT_EQ(config.include_dirs.size(), 1);
     EXPECT_EQ(config.include_dirs[0], ".");
     EXPECT_TRUE(config.exclude_dirs.empty());
@@ -100,16 +89,14 @@ TEST_F(ParserTest, ParseDefaultValues) {
 
 TEST_F(ParserTest, ParseIncludeDirectories) {
     Parser parser;
-    
-    // Одна директория
+
     std::vector<std::string> args = {"./bayan", "--include", "/home/user/docs"};
     char** argv = CreateArgv(args);
     
     Config config = parser.Parse(argc, argv);
     EXPECT_EQ(config.include_dirs.size(), 1);
     EXPECT_EQ(config.include_dirs[0], "/home/user/docs");
-    
-    // Несколько директорий
+
     args = {"./bayan", "--include", "/home/user/docs", "/home/user/images"};
     argv = CreateArgv(args);
     
@@ -117,16 +104,14 @@ TEST_F(ParserTest, ParseIncludeDirectories) {
     EXPECT_EQ(config.include_dirs.size(), 2);
     EXPECT_EQ(config.include_dirs[0], "/home/user/docs");
     EXPECT_EQ(config.include_dirs[1], "/home/user/images");
-    
-    // Короткая форма
+
     args = {"./bayan", "-i", "/home/user/docs"};
     argv = CreateArgv(args);
     
     config = parser.Parse(argc, argv);
     EXPECT_EQ(config.include_dirs.size(), 1);
     EXPECT_EQ(config.include_dirs[0], "/home/user/docs");
-    
-    // Позиционные аргументы
+
     args = {"./bayan", "/home/user/docs", "/home/user/images"};
     argv = CreateArgv(args);
     
@@ -146,8 +131,7 @@ TEST_F(ParserTest, ParseExcludeDirectories) {
     EXPECT_EQ(config.exclude_dirs.size(), 2);
     EXPECT_EQ(config.exclude_dirs[0], "/home/user/temp");
     EXPECT_EQ(config.exclude_dirs[1], "/home/user/backup");
-    
-    // Короткая форма
+
     args = {"./bayan", "-e", "/home/user/temp"};
     argv = CreateArgv(args);
     
@@ -164,15 +148,13 @@ TEST_F(ParserTest, ParseDepth) {
     
     Config config = parser.Parse(argc, argv);
     EXPECT_EQ(config.depth, 3);
-    
-    // Короткая форма
+
     args = {"./bayan", "-d", "5"};
     argv = CreateArgv(args);
     
     config = parser.Parse(argc, argv);
     EXPECT_EQ(config.depth, 5);
-    
-    // По умолчанию
+
     args = {"./bayan"};
     argv = CreateArgv(args);
     
@@ -188,15 +170,13 @@ TEST_F(ParserTest, ParseMinSize) {
     
     Config config = parser.Parse(argc, argv);
     EXPECT_EQ(config.min_file_size, 1024);
-    
-    // Большое значение
-    args = {"./bayan", "--min-size", "1048576"}; // 1 MB
+
+    args = {"./bayan", "--min-size", "1048576"}; 
     argv = CreateArgv(args);
     
     config = parser.Parse(argc, argv);
     EXPECT_EQ(config.min_file_size, 1048576);
-    
-    // Значение по умолчанию
+
     args = {"./bayan"};
     argv = CreateArgv(args);
     
@@ -214,8 +194,7 @@ TEST_F(ParserTest, ParseMasks) {
     ASSERT_EQ(config.masks.size(), 2);
     EXPECT_EQ(config.masks[0], "*.txt");
     EXPECT_EQ(config.masks[1], "*.jpg");
-    
-    // Короткая форма
+
     args = {"./bayan", "-m", "*.pdf", "*.doc"};
     argv = CreateArgv(args);
     
@@ -223,8 +202,7 @@ TEST_F(ParserTest, ParseMasks) {
     ASSERT_EQ(config.masks.size(), 2);
     EXPECT_EQ(config.masks[0], "*.pdf");
     EXPECT_EQ(config.masks[1], "*.doc");
-    
-    // Несколько масок через пробел
+
     args = {"./bayan", "-m", "*.txt", "*.log", "*.tmp"};
     argv = CreateArgv(args);
     
@@ -243,15 +221,13 @@ TEST_F(ParserTest, ParseBlockSize) {
     
     Config config = parser.Parse(argc, argv);
     EXPECT_EQ(config.block_size, 8192);
-    
-    // Короткая форма
+
     args = {"./bayan", "-b", "16384"};
     argv = CreateArgv(args);
     
     config = parser.Parse(argc, argv);
     EXPECT_EQ(config.block_size, 16384);
-    
-    // Значение по умолчанию
+
     args = {"./bayan"};
     argv = CreateArgv(args);
     
@@ -261,36 +237,31 @@ TEST_F(ParserTest, ParseBlockSize) {
 
 TEST_F(ParserTest, ParseHashType) {
     Parser parser;
-    
-    // CRC32 (по умолчанию)
+
     std::vector<std::string> args = {"./bayan", "--hash", "crc32"};
     char** argv = CreateArgv(args);
     
     Config config = parser.Parse(argc, argv);
     EXPECT_EQ(config.hash_type, HashType::CRC32);
-    
-    // MD5
+
     args = {"./bayan", "--hash", "md5"};
     argv = CreateArgv(args);
     
     config = parser.Parse(argc, argv);
     EXPECT_EQ(config.hash_type, HashType::MD5);
-    
-    // Верхний регистр
+
     args = {"./bayan", "--hash", "CRC32"};
     argv = CreateArgv(args);
     
     config = parser.Parse(argc, argv);
     EXPECT_EQ(config.hash_type, HashType::CRC32);
-    
-    // Смешанный регистр
+
     args = {"./bayan", "--hash", "Md5"};
     argv = CreateArgv(args);
     
     config = parser.Parse(argc, argv);
     EXPECT_EQ(config.hash_type, HashType::MD5);
-    
-    // Значение по умолчанию
+
     args = {"./bayan"};
     argv = CreateArgv(args);
     
@@ -310,8 +281,7 @@ TEST_F(ParserTest, ParseHashTypeInvalid) {
     argv = CreateArgv(args);
     
     EXPECT_THROW(parser.Parse(argc, argv), std::runtime_error);
-    
-    // Пустая строка
+
     args = {"./bayan", "--hash", ""};
     argv = CreateArgv(args);
     
@@ -358,37 +328,31 @@ TEST_F(ParserTest, ParseComplexCommand) {
 
 TEST_F(ParserTest, ParseInvalidBlockSize) {
     Parser parser;
-    
-    // Нулевой размер блока
+
     std::vector<std::string> args = {"./bayan", "--block", "0"};
     char** argv = CreateArgv(args);
     
     EXPECT_THROW(parser.Parse(argc, argv), std::runtime_error);
-    
-    // Отрицательный размер (должен быть отловлен как строка)
+
     args = {"./bayan", "--block", "-1"};
     argv = CreateArgv(args);
-    
-    // Может выбросить исключение или проигнорировать
+
     EXPECT_THROW(parser.Parse(argc, argv), std::exception);
 }
 
 TEST_F(ParserTest, ParseInvalidArguments) {
     Parser parser;
-    
-    // Неизвестный параметр
+
     std::vector<std::string> args = {"./bayan", "--unknown-param", "value"};
     char** argv = CreateArgv(args);
     
     EXPECT_THROW(parser.Parse(argc, argv), std::runtime_error);
-    
-    // Отсутствующее значение для параметра
+
     args = {"./bayan", "--depth"};
     argv = CreateArgv(args);
     
     EXPECT_THROW(parser.Parse(argc, argv), std::runtime_error);
-    
-    // Некорректное числовое значение
+
     args = {"./bayan", "--depth", "not-a-number"};
     argv = CreateArgv(args);
     
@@ -397,22 +361,19 @@ TEST_F(ParserTest, ParseInvalidArguments) {
 
 TEST_F(ParserTest, ValidateConfig) {
     Parser parser;
-    
-    // Валидная конфигурация
+
     std::vector<std::string> args = {"./bayan", "--include", "/home/user/docs"};
     char** argv = CreateArgv(args);
     
     Config config = parser.Parse(argc, argv);
     EXPECT_TRUE(config.Validate());
-    
-    // Еще одна валидная конфигурация
+
     args = {"./bayan", "/home/user/docs"};
     argv = CreateArgv(args);
     
     config = parser.Parse(argc, argv);
     EXPECT_TRUE(config.Validate());
-    
-    // Конфигурация с глубиной и масками
+
     args = {"./bayan", "-i", "/tmp", "-d", "2", "-m", "*.txt"};
     argv = CreateArgv(args);
     
@@ -422,8 +383,7 @@ TEST_F(ParserTest, ValidateConfig) {
 
 TEST_F(ParserTest, ParseWithRealPaths) {
     Parser parser;
-    
-    // Используем реальные временные пути
+
     fs::path temp_dir = fs::temp_directory_path();
     std::string temp_dir_str = temp_dir.string();
     
@@ -437,8 +397,7 @@ TEST_F(ParserTest, ParseWithRealPaths) {
     };
     
     char** argv = CreateArgv(args);
-    
-    // Должно успешно распарситься
+
     EXPECT_NO_THROW({
         Config config = parser.Parse(argc, argv);
         EXPECT_TRUE(config.Validate());
@@ -454,8 +413,7 @@ TEST_F(ParserTest, ParseWithRealPaths) {
 
 TEST_F(ParserTest, ParseMixedOptions) {
     Parser parser;
-    
-    // Смешанные длинные и короткие опции
+
     std::vector<std::string> args = {
         "./bayan",
         "-i", "/dir1",
@@ -486,12 +444,10 @@ TEST_F(ParserTest, ParseMixedOptions) {
 
 TEST_F(ParserTest, ParseEmptyArgs) {
     Parser parser;
-    
-    // Пустые аргументы (только имя программы)
+
     std::vector<std::string> args = {"./bayan"};
     char** argv = CreateArgv(args);
-    
-    // Должно успешно распарситься с значениями по умолчанию
+
     EXPECT_NO_THROW({
         Config config = parser.Parse(argc, argv);
         EXPECT_TRUE(config.Validate());
@@ -502,8 +458,7 @@ TEST_F(ParserTest, ParseEmptyArgs) {
 
 TEST_F(ParserTest, ParseOnlyPositionalArgs) {
     Parser parser;
-    
-    // Только позиционные аргументы
+
     std::vector<std::string> args = {
         "./bayan",
         "/path/to/scan1",
@@ -524,14 +479,13 @@ TEST_F(ParserTest, ParseOnlyPositionalArgs) {
 
 TEST_F(ParserTest, ParseDuplicateOptions) {
     Parser parser;
-    
-    // Дублирующиеся опции - последнее должно перезаписать
+
     std::vector<std::string> args = {
         "./bayan",
         "--block", "1024",
-        "--block", "2048",  // Должно перезаписать
+        "--block", "2048",  
         "--hash", "crc32",
-        "--hash", "md5"     // Должно перезаписать
+        "--hash", "md5"   
     };
     
     char** argv = CreateArgv(args);

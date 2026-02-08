@@ -1,6 +1,7 @@
 #include <algorithm>  
 #include <cctype>     
 #include "filter.h"
+#include <iostream>
 
 Filter::Filter(const std::vector<std::string>& masks)
 {
@@ -26,7 +27,7 @@ bool Filter::Match(const std::string& filename) const
     }
 
     return false;
-}
+} 
 
 std::string Filter::ToLower(const std::string& s)
 {

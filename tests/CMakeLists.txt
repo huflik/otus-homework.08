@@ -1,5 +1,3 @@
-enable_testing()
-
 add_executable(bayan_tests   
    test_hasher.cpp
    test_filter.cpp
@@ -25,10 +23,3 @@ target_link_libraries(bayan_tests
 )
 
 add_test(NAME bayan_tests COMMAND bayan_tests)
-
-   #test_hasher.cpp
-   #test_filter.cpp
-   #test_block_cache.cpp
-   #test_comparator.cpp
-   #test_duplicate_finder.cpp
-   #test_scanner.cpp
