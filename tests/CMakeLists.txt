@@ -7,7 +7,7 @@ add_executable(bayan_tests
    test_comparator.cpp
    test_duplicate_finder.cpp
    test_scanner.cpp
-
+   test_integration.cpp
 )
 
 target_include_directories(bayan_tests

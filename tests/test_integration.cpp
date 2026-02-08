@@ -85,7 +85,8 @@ TEST_F(IntegrationTest, CompleteWorkflowWithDefaultSettings) {
     std::vector<std::string> args = {
         "./bayan",
         "--include", test_root.string(),
-        "--min-size", "1"
+        "--min-size", "2",
+        "--depth", "1"
     };
     
     // Эмулируем argc/argv
@@ -158,8 +159,9 @@ TEST_F(IntegrationTest, WorkflowWithMasks) {
     std::vector<std::string> args = {
         "./bayan",
         "--include", test_root.string(),
+        "--depth", "1",
         "--mask", "*.txt",
-        "--min-size", "1"
+        "--min-size", "2"
     };
     
     int argc = args.size();
