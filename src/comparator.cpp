@@ -1,3 +1,4 @@
+#include <iostream>
 #include "comparator.h"
 #include "block_cache.h" 
 
@@ -25,6 +26,7 @@ bool Comparator::Equals(const boost::filesystem::path& a, const boost::filesyste
         return true;
     }
     catch (const std::exception& e) {
+        std::cerr << "Error reading files. Files " << a.string() << "and " << b.string() << " are considered different" << e.what() << "\n";
         return false;
     }
 }

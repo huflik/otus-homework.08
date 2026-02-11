@@ -100,11 +100,13 @@ void Scanner::ScanDirectory(const boost::filesystem::path& root, size_t current_
                 
             }
             catch (const std::exception& e) {
+                std::cerr << "Skipping problematic files/directories. Error: " << e.what() << "\n";
                 continue;
             }
         }
     }
     catch (const boost::filesystem::filesystem_error& e) {
+        std::cerr << "Skipping directories with access errors. Error: " << e.what() << "\n";
         return;
     }
 }
