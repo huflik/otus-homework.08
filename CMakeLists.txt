@@ -8,7 +8,7 @@ project(bayan VERSION ${PROJECT_VERSION})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_compile_options(-Wall -Wextra -Wpedantic)
+add_compile_options(-Wall -Wextra -Wpedantic -Werror=uninitialized)
 
 enable_testing()
 

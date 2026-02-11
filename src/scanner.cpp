@@ -71,18 +71,12 @@ void Scanner::ScanDirectory(const boost::filesystem::path& root, size_t current_
                 if (IsExcluded(path)) {
                     continue;
                 }
-                
-                uintmax_t size;
-                try {
-                    size = boost::filesystem::file_size(path);
-                }
-                catch (...) {
+
+                boost::system::error_code ec{};
+                uintmax_t size = boost::filesystem::file_size(path, ec);
+                if (ec || size <= config_.min_file_size) {
                     continue;
-                }
-                
-                if (size <= config_.min_file_size) {
-                    continue;
-                }
+                }               
                 
                 if (!filter_.Match(path.filename().string())) {
                     continue;
