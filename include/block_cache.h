@@ -5,13 +5,14 @@
 #include <vector>                
 #include <string>                
 #include <fstream>               
-#include <memory>                
+#include <memory>  
+#include "path_hash.h"              
 
 class Hasher;
 
 struct BlockKey
 {
-    std::string path;   
+    boost::filesystem::path path;   
     size_t index;       
 
     bool operator==(const BlockKey& other) const
@@ -24,7 +25,7 @@ struct BlockKeyHash
 {
     std::size_t operator()(const BlockKey& k) const
     {
-        return std::hash<std::string>()(k.path) ^ (std::hash<size_t>()(k.index) << 1);
+        return std::hash<std::string>()(k.path.string()) ^ (std::hash<size_t>()(k.index) << 1);
     }
 };
 
@@ -50,8 +51,8 @@ private:
     size_t block_size_;  
     std::unique_ptr<Hasher> hasher_;  
     std::unordered_map<BlockKey, std::string, BlockKeyHash> hash_cache_; 
-    std::unordered_map<std::string, size_t> file_block_count_;
-    std::unordered_map<std::string, std::shared_ptr<FileHandle>> open_files_;
+    std::unordered_map<boost::filesystem::path, size_t, PathHash> file_block_count_;
+    std::unordered_map<boost::filesystem::path, std::shared_ptr<FileHandle>, PathHash> open_files_;
     
     std::string ReadAndHashBlock(const boost::filesystem::path& file, size_t index);
     std::shared_ptr<FileHandle> GetFileHandle(const boost::filesystem::path& file);

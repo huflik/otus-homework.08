@@ -9,9 +9,9 @@ DuplicateFinder::DuplicateFinder(std::unique_ptr<BlockCache> cache) : cache_(std
     comparator_ = std::make_unique<Comparator>(*cache_);
 }
 
-std::vector<std::vector<std::string>> DuplicateFinder::Find(const std::map<uintmax_t, std::vector<std::string>>& groups)
+std::vector<std::vector<boost::filesystem::path>> DuplicateFinder::Find(const std::map<uintmax_t, std::vector<boost::filesystem::path>>& groups)
 {
-    std::vector<std::vector<std::string>> result;
+    std::vector<std::vector<boost::filesystem::path>> result;
     
     for (const auto& [size, files] : groups) {
         if (files.size() < 2) {

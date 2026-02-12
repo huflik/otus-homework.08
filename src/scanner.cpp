@@ -5,9 +5,9 @@ Scanner::Scanner(const Config& config) : config_(config), filter_(config.masks)
 {
 }
 
-std::map<uintmax_t, std::vector<std::string>> Scanner::Scan()
+std::map<uintmax_t, std::vector<boost::filesystem::path>> Scanner::Scan()
 {
-    std::map<uintmax_t, std::vector<std::string>> result;
+    std::map<uintmax_t, std::vector<boost::filesystem::path>> result;
     seen_paths_.clear();
     
     for (const auto& dir : config_.include_dirs) {
@@ -33,7 +33,7 @@ bool Scanner::ScanSubdirectory(size_t current_depth) const
     return (current_depth + 1) <= config_.depth;
 }
 
-void Scanner::ScanDirectory(const boost::filesystem::path& root, size_t current_depth, std::map<uintmax_t, std::vector<std::string>>& result)
+void Scanner::ScanDirectory(const boost::filesystem::path& root, size_t current_depth, std::map<uintmax_t, std::vector<boost::filesystem::path>>& result)
 {
     if (!boost::filesystem::exists(root) || 
         !boost::filesystem::is_directory(root)) {

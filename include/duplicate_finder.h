@@ -9,7 +9,7 @@
 class DuplicateFinder {
 public:
     explicit DuplicateFinder(std::unique_ptr<BlockCache> cache);  
-    std::vector<std::vector<std::string>> Find(const std::map<uintmax_t, std::vector<std::string>>& groups);
+    std::vector<std::vector<boost::filesystem::path>> Find(const std::map<uintmax_t, std::vector<boost::filesystem::path>>& groups);
     
 private:
     std::unique_ptr<BlockCache> cache_;        

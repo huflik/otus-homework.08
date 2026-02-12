@@ -86,10 +86,10 @@ TEST_F(IntegrationTest, CompleteWorkflowWithDefaultSettings) {
     
     EXPECT_TRUE(config.Validate());
     EXPECT_EQ(config.include_dirs.size(), 1);
-    EXPECT_EQ(config.include_dirs[0], test_root.string());
+    EXPECT_EQ(config.include_dirs[0], test_root);  
     
     Scanner scanner(config);
-    auto files_by_size = scanner.Scan();
+    auto files_by_size = scanner.Scan();  
 
     EXPECT_FALSE(files_by_size.empty());
 
@@ -97,8 +97,7 @@ TEST_F(IntegrationTest, CompleteWorkflowWithDefaultSettings) {
     auto cache = std::make_unique<BlockCache>(config.block_size, std::move(hasher));
     DuplicateFinder finder(std::move(cache));
 
-    auto duplicates = finder.Find(files_by_size);
-
+    auto duplicates = finder.Find(files_by_size);  
     bool found_text_duplicates = false;
     bool found_image_duplicates = false;
     
@@ -107,12 +106,13 @@ TEST_F(IntegrationTest, CompleteWorkflowWithDefaultSettings) {
             int text_count = 0;
             int image_count = 0;
             
-            for (const auto& file : group) {
-                if (file.find("file") != std::string::npos && 
-                    file.find(".txt") != std::string::npos) {
+            for (const auto& file : group) {  
+                std::string filename = file.string();  
+                if (filename.find("file") != std::string::npos && 
+                    filename.find(".txt") != std::string::npos) {
                     text_count++;
-                } else if (file.find("image") != std::string::npos && 
-                          file.find(".jpg") != std::string::npos) {
+                } else if (filename.find("image") != std::string::npos && 
+                          filename.find(".jpg") != std::string::npos) {
                     image_count++;
                 }
             }
@@ -156,10 +156,11 @@ TEST_F(IntegrationTest, WorkflowWithMasks) {
     
     for (const auto& [size, files] : files_by_size) {
         for (const auto& file : files) {
-            if (file.find(".txt") != std::string::npos) {
+            std::string filename = file.string();
+            if (filename.find(".txt") != std::string::npos) {
                 found_txt = true;
             }
-            if (file.find(".jpg") != std::string::npos) {
+            if (filename.find(".jpg") != std::string::npos) {
                 found_jpg = true;
             }
         }
@@ -194,7 +195,8 @@ TEST_F(IntegrationTest, WorkflowWithExclude) {
     
     for (const auto& [size, files] : files_by_size) {
         for (const auto& file : files) {
-            if (file.find("dir2") != std::string::npos) {
+            std::string path_str = file.string();
+            if (path_str.find("dir2") != std::string::npos) {
                 found_excluded = true;
                 break;
             }
@@ -232,7 +234,8 @@ TEST_F(IntegrationTest, WorkflowWithMinSize) {
     
     for (const auto& [size, files] : files_by_size) {
         for (const auto& file : files) {
-            if (file.find("small.txt") != std::string::npos) {
+            std::string path_str = file.string();
+            if (path_str.find("small.txt") != std::string::npos) {
                 found_small = true;
                 break;
             }
@@ -268,7 +271,8 @@ TEST_F(IntegrationTest, WorkflowWithDepth) {
     
     for (const auto& [size, files] : files_by_size) {
         for (const auto& file : files) {
-            if (file.find("deep_file.txt") != std::string::npos) {
+            std::string path_str = file.string();
+            if (path_str.find("deep_file.txt") != std::string::npos) {
                 found_deep = true;
                 break;
             }
@@ -528,10 +532,11 @@ TEST_F(IntegrationTest, MultipleIncludeDirectories) {
     
     for (const auto& [size, files] : files_by_size) {
         for (const auto& file : files) {
-            if (file.find("dir1") != std::string::npos) {
+            std::string path_str = file.string();
+            if (path_str.find("dir1") != std::string::npos) {
                 found_dir1 = true;
             }
-            if (file.find("dir2") != std::string::npos) {
+            if (path_str.find("dir2") != std::string::npos) {
                 found_dir2 = true;
             }
         }
@@ -647,10 +652,11 @@ TEST_F(IntegrationTest, FileModificationDoesNotAffectHashing) {
             bool has_file2 = false;
             
             for (const auto& file : group) {
-                if (file.find("original.txt") != std::string::npos) {
+                std::string path_str = file.string();
+                if (path_str.find("original.txt") != std::string::npos) {
                     has_file1 = true;
                 }
-                if (file.find("copy.txt") != std::string::npos) {
+                if (path_str.find("copy.txt") != std::string::npos) {
                     has_file2 = true;
                 }
             }

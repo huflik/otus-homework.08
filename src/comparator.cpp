@@ -26,21 +26,20 @@ bool Comparator::Equals(const boost::filesystem::path& a, const boost::filesyste
         return true;
     }
     catch (const std::exception& e) {
-        std::cerr << "Error reading files. Files " << a.string() << "and " << b.string() << " are considered different" << e.what() << "\n";
+        std::cerr << "Error reading files. Files " << a << "and " << b << " are considered different" << e.what() << "\n";
         return false;
     }
 }
 
-std::vector<std::vector<std::string>> Comparator::FindDuplicates(const std::vector<std::string>& files)
+std::vector<std::vector<boost::filesystem::path>> Comparator::FindDuplicates(const std::vector<boost::filesystem::path>& files)
 {
-    std::vector<std::vector<std::string>> result; 
+    std::vector<std::vector<boost::filesystem::path>> result; 
     
     if (files.size() < 2) {
         return result; 
     }
     
-    std::vector<std::string> remaining_files = files;
-    
+    std::vector<boost::filesystem::path> remaining_files = files;
     std::vector<bool> processed(remaining_files.size(), false);
     
     for (size_t i = 0; i < remaining_files.size(); ++i) {
@@ -48,7 +47,7 @@ std::vector<std::vector<std::string>> Comparator::FindDuplicates(const std::vect
             continue;
         }
         
-        std::vector<std::string> duplicate_group;
+        std::vector<boost::filesystem::path> duplicate_group;
         duplicate_group.push_back(remaining_files[i]);
         processed[i] = true;
         
@@ -64,7 +63,7 @@ std::vector<std::vector<std::string>> Comparator::FindDuplicates(const std::vect
         }
         
         if (duplicate_group.size() > 1) {
-            result.push_back(std::move(duplicate_group)); 
+            result.push_back(std::move(duplicate_group));
         }
     }
     

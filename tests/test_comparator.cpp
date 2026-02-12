@@ -111,11 +111,11 @@ TEST_F(ComparatorTest, FindDuplicatesEmpty) {
     auto cache = std::make_unique<BlockCache>(4096, std::move(hasher));
     Comparator comparator(*cache);
 
-    std::vector<std::string> empty;
+    std::vector<boost::filesystem::path> empty;
     auto result = comparator.FindDuplicates(empty);
     EXPECT_TRUE(result.empty());
 
-    std::vector<std::string> single = {GetTestFilePath("file1.bin").string()};
+    std::vector<boost::filesystem::path> single = {GetTestFilePath("file1.bin")};
     result = comparator.FindDuplicates(single);
     EXPECT_TRUE(result.empty());
 }
@@ -125,10 +125,10 @@ TEST_F(ComparatorTest, FindDuplicatesNoDuplicates) {
     auto cache = std::make_unique<BlockCache>(4096, std::move(hasher));
     Comparator comparator(*cache);
 
-    std::vector<std::string> files = {
-        GetTestFilePath("file1.bin").string(),
-        GetTestFilePath("file3.bin").string(),
-        GetTestFilePath("file4.bin").string()
+    std::vector<boost::filesystem::path> files = {
+        GetTestFilePath("file1.bin"),
+        GetTestFilePath("file3.bin"),
+        GetTestFilePath("file4.bin")
     };
     
     auto result = comparator.FindDuplicates(files);
@@ -140,10 +140,10 @@ TEST_F(ComparatorTest, FindDuplicatesWithDuplicates) {
     auto cache = std::make_unique<BlockCache>(4096, std::move(hasher));
     Comparator comparator(*cache);
 
-    std::vector<std::string> files = {
-        GetTestFilePath("file1.bin").string(),
-        GetTestFilePath("file2.bin").string(),
-        GetTestFilePath("file3.bin").string()
+    std::vector<boost::filesystem::path> files = {
+        GetTestFilePath("file1.bin"),
+        GetTestFilePath("file2.bin"),
+        GetTestFilePath("file3.bin")
     };
     
     auto result = comparator.FindDuplicates(files);
@@ -167,13 +167,13 @@ TEST_F(ComparatorTest, FindDuplicatesMultipleGroups) {
     CreateTestFile("copy3.bin", "Different content");
     CreateTestFile("copy4.bin", "Different content");
     
-    std::vector<std::string> files = {
-        GetTestFilePath("file1.bin").string(),
-        GetTestFilePath("file2.bin").string(),
-        GetTestFilePath("copy1.bin").string(),
-        GetTestFilePath("copy2.bin").string(),
-        GetTestFilePath("copy3.bin").string(),
-        GetTestFilePath("copy4.bin").string()
+    std::vector<boost::filesystem::path> files = {
+        GetTestFilePath("file1.bin"),
+        GetTestFilePath("file2.bin"),
+        GetTestFilePath("copy1.bin"),
+        GetTestFilePath("copy2.bin"),
+        GetTestFilePath("copy3.bin"),
+        GetTestFilePath("copy4.bin")
     };
     
     auto result = comparator.FindDuplicates(files);
@@ -194,10 +194,10 @@ TEST_F(ComparatorTest, FindDuplicatesAllSame) {
     CreateTestFile("same2.bin", "Same content");
     CreateTestFile("same3.bin", "Same content");
     
-    std::vector<std::string> files = {
-        GetTestFilePath("same1.bin").string(),
-        GetTestFilePath("same2.bin").string(),
-        GetTestFilePath("same3.bin").string()
+    std::vector<boost::filesystem::path> files = {
+        GetTestFilePath("same1.bin"),
+        GetTestFilePath("same2.bin"),
+        GetTestFilePath("same3.bin")
     };
     
     auto result = comparator.FindDuplicates(files);

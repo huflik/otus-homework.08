@@ -18,9 +18,8 @@ BlockCache::~BlockCache() {}
 
 size_t BlockCache::GetBlockCount(const boost::filesystem::path& file)
 {
-    auto key = file.string(); 
     
-    auto it = file_block_count_.find(key);
+    auto it = file_block_count_.find(file);
     if (it != file_block_count_.end())
         return it->second;
 
@@ -29,7 +28,7 @@ size_t BlockCache::GetBlockCount(const boost::filesystem::path& file)
         
         size_t count = (size + block_size_ - 1) / block_size_;
         
-        file_block_count_[key] = count;
+        file_block_count_[file] = count;
         return count;
     }
     catch (const boost::filesystem::filesystem_error& e) {
@@ -39,9 +38,8 @@ size_t BlockCache::GetBlockCount(const boost::filesystem::path& file)
 
 std::shared_ptr<FileHandle> BlockCache::GetFileHandle(const boost::filesystem::path& file)
 {
-    auto key = file.string();
-    
-    auto it = open_files_.find(key);
+   
+    auto it = open_files_.find(file);
     if (it != open_files_.end()) {
         return it->second; 
     }
@@ -53,7 +51,7 @@ std::shared_ptr<FileHandle> BlockCache::GetFileHandle(const boost::filesystem::p
             throw std::runtime_error("Cannot open file: " + file.string());
         }
         
-        open_files_[key] = handle;
+        open_files_[file] = handle;
         return handle;
     }
     catch (const std::exception& e) {
@@ -87,7 +85,7 @@ std::string BlockCache::ReadAndHashBlock(const boost::filesystem::path& file, si
 
 std::string BlockCache::GetBlockHash(const boost::filesystem::path& file, size_t block_index)
 {
-    BlockKey key{file.string(), block_index};
+    BlockKey key{file, block_index};
 
     auto it = hash_cache_.find(key);
     if (it != hash_cache_.end()) {

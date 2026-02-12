@@ -26,13 +26,13 @@ TEST_F(DuplicateFinderTest, ConstructorNullCache) {
 }
 
 TEST_F(DuplicateFinderTest, FindEmptyGroups) {
-    std::map<uintmax_t, std::vector<std::string>> empty_groups;
+    std::map<uintmax_t, std::vector<boost::filesystem::path>> empty_groups;
     auto result = finder->Find(empty_groups);
     EXPECT_TRUE(result.empty());
 }
 
 TEST_F(DuplicateFinderTest, FindSingleFileGroups) {
-    std::map<uintmax_t, std::vector<std::string>> groups = {
+    std::map<uintmax_t, std::vector<boost::filesystem::path>> groups = {
         {100, {"file1.txt"}},
         {200, {"file2.txt"}},
         {300, {"file3.txt"}}
@@ -43,7 +43,7 @@ TEST_F(DuplicateFinderTest, FindSingleFileGroups) {
 }
 
 TEST_F(DuplicateFinderTest, FindGroupsWithMultipleFiles) {
-    std::map<uintmax_t, std::vector<std::string>> groups = {
+    std::map<uintmax_t, std::vector<boost::filesystem::path>> groups = {
         {100, {"test/file1.txt", "test/file2.txt", "test/file3.txt"}},
         {200, {"test/file4.txt", "test/file5.txt"}},
         {300, {"test/file6.txt"}}
@@ -54,7 +54,7 @@ TEST_F(DuplicateFinderTest, FindGroupsWithMultipleFiles) {
 }
 
 TEST_F(DuplicateFinderTest, FindReturnsValidStructure) {
-    std::map<uintmax_t, std::vector<std::string>> groups = {
+    std::map<uintmax_t, std::vector<boost::filesystem::path>> groups = {
         {100, {"test/file1.txt", "test/file2.txt"}}
     };
     
@@ -69,7 +69,7 @@ TEST_F(DuplicateFinderTest, DifferentHashTypes) {
         auto cache = std::make_unique<BlockCache>(4096, std::move(hasher));
         DuplicateFinder finder(std::move(cache));
         
-        std::map<uintmax_t, std::vector<std::string>> groups = {
+        std::map<uintmax_t, std::vector<boost::filesystem::path>> groups = {
             {100, {"file1.txt", "file2.txt"}}
         };
         
@@ -81,7 +81,7 @@ TEST_F(DuplicateFinderTest, DifferentHashTypes) {
         auto cache = std::make_unique<BlockCache>(4096, std::move(hasher));
         DuplicateFinder finder(std::move(cache));
         
-        std::map<uintmax_t, std::vector<std::string>> groups = {
+        std::map<uintmax_t, std::vector<boost::filesystem::path>> groups = {
             {100, {"file1.txt", "file2.txt"}}
         };
         
@@ -105,7 +105,7 @@ TEST_F(DuplicateFinderTest, IntegrationWithRealFiles) {
         file3 << "Different content";
     }
     
-    std::map<uintmax_t, std::vector<std::string>> groups;
+    std::map<uintmax_t, std::vector<boost::filesystem::path>> groups;
     
     for (const auto& entry : fs::directory_iterator(temp_dir)) {
         if (fs::is_regular_file(entry)) {

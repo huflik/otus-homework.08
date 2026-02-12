@@ -1,6 +1,6 @@
 #include "utilities.h"
 
-void PrintResults(const std::vector<std::vector<std::string>>& duplicates)
+void PrintResults(const std::vector<std::vector<boost::filesystem::path>>& duplicates)
 {
     if (duplicates.empty()) {
         std::cout << "No duplicate files found.\n";
